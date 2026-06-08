@@ -324,3 +324,59 @@ DROP TABLE TCargo; DROP TABLE TDepartamento; DROP TABLE TSucursal;
 -- 80. Eliminar DB
 USE master; DROP DATABASE EmpresaSQL;
 
+-- 81. Crear tabla TCliente
+CREATE TABLE TCliente (
+    nClienteID INT IDENTITY(1,1) PRIMARY KEY,
+    cNombre VARCHAR(100) NOT NULL,
+    cApellido VARCHAR(100) NOT NULL,
+    cEmail VARCHAR(150) UNIQUE,
+    cTelefono VARCHAR(20),
+    cDireccion VARCHAR(250),
+    dFechaRegistro DATE DEFAULT GETDATE(),
+    bActivo BIT DEFAULT 1,
+    CONSTRAINT CHK_Email CHECK (cEmail LIKE '%@%.%')
+);
+
+-- 82. Crear tabla TVenta
+CREATE TABLE TVenta (
+    nVentaID INT IDENTITY(1,1) PRIMARY KEY,
+    nClienteID INT,
+    dFechaVenta DATE DEFAULT GETDATE(),
+    nTotal DECIMAL(18, 2) NOT NULL,
+    cMetodoPago VARCHAR(50),
+    CONSTRAINT FK_Venta_Cliente FOREIGN KEY (nClienteID) REFERENCES TCliente(nClienteID)
+);
+
+-- 83. Insertar 20 clientes (Ejemplo de formato, repetir o ajustar datos)
+INSERT INTO TCliente (cNombre, cApellido, cEmail) VALUES 
+('Juan', 'Pérez', 'j.perez@email.com'), ('Ana', 'Gómez', 'a.gomez@email.com'), ... ;
+
+-- 84. Registrar 50 ventas (Ejemplo)
+INSERT INTO TVenta (nClienteID, nTotal, cMetodoPago) VALUES (1, 150.50, 'Tarjeta');
+
+-- 85. Actualizar montos (Ejemplo: aplicar descuento del 10% a ventas de 'Efectivo')
+UPDATE TVenta SET nTotal = nTotal * 0.90 WHERE cMetodoPago = 'Efectivo';
+
+-- 86. Eliminar clientes sin ventas
+DELETE FROM TCliente 
+WHERE nClienteID NOT IN (SELECT DISTINCT nClienteID FROM TVenta);
+
+-- 87. Top 5 clientes con mayores compras
+SELECT TOP 5 C.cNombre, C.cApellido, SUM(V.nTotal) AS TotalComprado
+FROM TCliente C JOIN TVenta V ON C.nClienteID = V.nClienteID
+GROUP BY C.cNombre, C.cApellido
+ORDER BY TotalComprado DESC;
+
+-- 88. Ventas por mes
+SELECT MONTH(dFechaVenta) AS Mes, SUM(nTotal) AS VentasTotales
+FROM TVenta GROUP BY MONTH(dFechaVenta);
+
+-- 89. Promedio de ventas por cliente
+SELECT nClienteID, AVG(nTotal) AS PromedioVenta
+FROM TVenta GROUP BY nClienteID;
+
+-- 90. Reporte consolidado (Uniendo Cliente, Venta y Detalle - asumiendo una tabla Producto/Detalle)
+SELECT C.cNombre, C.cApellido, V.nVentaID, V.nTotal, V.dFechaVenta
+FROM TCliente C
+INNER JOIN TVenta V ON C.nClienteID = V.nClienteID
+INNER JOIN TDetalleVenta DV ON V.nVentaID = DV.nVentaID;
