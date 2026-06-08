@@ -1,0 +1,185 @@
+-- 1. Crear una base de datos llamada EmpresaSQL.
+CREATE DATABASE EmpresaSQL;
+GO
+
+-- 2. Seleccionar la base de datos creada.
+USE EmpresaSQL;
+GO
+
+-- 3. Crear una tabla llamada TDepartamento.
+CREATE TABLE TDepartamento (
+    nDepartamentoID INT IDENTITY(1,1),
+    cNombreDepartamento VARCHAR(100) NOT NULL,
+    -- Definición de restricciones
+    CONSTRAINT PK_TDepartamento PRIMARY KEY (nDepartamentoID),
+    CONSTRAINT UQ_cNombreDepartamento UNIQUE (cNombreDepartamento)
+);
+GO
+
+-- 4. Crear una tabla llamada TCargo.
+CREATE TABLE TCargo (
+    nCargoID INT IDENTITY(1,1),
+    cNombreCargo VARCHAR(100) NOT NULL,
+    -- Definición de restricciones
+    CONSTRAINT PK_TCargo PRIMARY KEY (nCargoID),
+    CONSTRAINT UQ_cNombreCargo UNIQUE (cNombreCargo)
+);
+GO
+
+-- 5. Crear una tabla llamada TEmpleado.
+-- Nota: Se incluyen las llaves foráneas (FK) correspondientes para mantener la integridad referencial con TDepartamento y TCargo.
+CREATE TABLE TEmpleado (
+    nEmpleadoID INT IDENTITY(1,1),
+    cNIF VARCHAR(20) NULL, -- Se asume que permite nulos pero los valores ingresados deben ser únicos
+    cNombre VARCHAR(50) NOT NULL,
+    cApellido VARCHAR(50) NOT NULL,
+    nDepartamentoID INT NULL,
+    nCargoID INT NULL,
+    dFechaContratacion DATE NULL,
+    nSalario DECIMAL(18, 2) NULL,
+    -- Definición de restricciones
+    CONSTRAINT PK_TEmpleado PRIMARY KEY (nEmpleadoID),
+    CONSTRAINT UQ_cNIF UNIQUE (cNIF),
+    CONSTRAINT FK_TEmpleado_TDepartamento FOREIGN KEY (nDepartamentoID) 
+        REFERENCES TDepartamento(nDepartamentoID) ON DELETE SET NULL,
+    CONSTRAINT FK_TEmpleado_TCargo FOREIGN KEY (nCargoID) 
+        REFERENCES TCargo(nCargoID) ON DELETE SET NULL
+);
+GO
+
+USE EmpresaSQL;
+GO
+
+-- =======================================================================
+-- Modificaciones a la tabla TEmpleado (Puntos 6 al 9)
+-- =======================================================================
+
+-- 6. Agregar restricción CHECK para que el salario sea mayor que 300.
+ALTER TABLE TEmpleado
+ADD CONSTRAINT CHK_nSalario_Minimo CHECK (nSalario > 300);
+GO
+
+-- 7. Agregar restricción DEFAULT para la fecha de contratación (se asigna la fecha actual por defecto).
+ALTER TABLE TEmpleado
+ADD CONSTRAINT DF_dFechaContratacion DEFAULT GETDATE() FOR dFechaContratacion;
+GO
+
+-- 8. Establecer llave foránea entre TEmpleado y TDepartamento.
+-- (Nota: Si ya la habías incluido en el script inicial, este comando la reafirma o aplica si no existía)
+ALTER TABLE TEmpleado
+ADD CONSTRAINT FK_TEmpleado_TDepartamento 
+FOREIGN KEY (nDepartamentoID) REFERENCES TDepartamento(nDepartamentoID);
+GO
+
+-- 9. Establecer llave foránea entre TEmpleado y TCargo.
+ALTER TABLE TEmpleado
+ADD CONSTRAINT FK_TEmpleado_TCargo 
+FOREIGN KEY (nCargoID) REFERENCES TCargo(nCargoID);
+GO
+
+
+
+CREATE TABLE TProyecto (
+    nProyectoID INT IDENTITY(1,1),                -- Puntos 10 y 11
+    cNombreProyecto VARCHAR(150) NOT NULL,        -- Punto 12
+    dFechaInicio DATE NOT NULL,                   -- Punto 13
+    dFechaFin DATE NULL,                          -- Punto 14
+    
+    CONSTRAINT PK_TProyecto PRIMARY KEY (nProyectoID)
+);
+GO
+
+-- 15. Crear tabla intermedia TEmpleadoProyecto para relación muchos a muchos.
+-- Esta tabla vincula TEmpleado y TProyecto, y su llave primaria es compuesta por ambos IDs.
+CREATE TABLE TEmpleadoProyecto (
+    nEmpleadoID INT NOT NULL,
+    nProyectoID INT NOT NULL,
+    dFechaAsignacion DATE NULL CONSTRAINT DF_dFechaAsignacion DEFAULT GETDATE(), -- Campo extra opcional para auditoría
+    
+    -- Definición de la Clave Primaria Compuesta
+    CONSTRAINT PK_TEmpleadoProyecto PRIMARY KEY (nEmpleadoID, nProyectoID),
+    
+    -- Llaves foráneas que garantizan la integridad de la relación muchos a muchos
+    CONSTRAINT FK_TEmpleadoProyecto_TEmpleado FOREIGN KEY (nEmpleadoID) 
+        REFERENCES TEmpleado(nEmpleadoID) ON DELETE CASCADE,
+        
+    CONSTRAINT FK_TEmpleadoProyecto_TProyecto FOREIGN KEY (nProyectoID) 
+        REFERENCES TProyecto(nProyectoID) ON DELETE CASCADE
+);
+GO
+
+-- 16 y 17. Agregar columnas cEmail y cTelefono.
+ALTER TABLE TEmpleado
+ADD cEmail VARCHAR(150) NULL,
+    cTelefono VARCHAR(15) NULL; -- Se crea inicialmente con longitud de 15
+GO
+
+-- 18 y 19. Modificar longitud de cNombre y cApellido a 100 caracteres.
+ALTER TABLE TEmpleado
+ALTER COLUMN cNombre VARCHAR(100) NOT NULL;
+
+ALTER TABLE TEmpleado
+ALTER COLUMN cApellido VARCHAR(100) NOT NULL;
+GO
+
+-- 20 y 21. Agregar columnas cDireccion y nEdad.
+ALTER TABLE TEmpleado
+ADD cDireccion VARCHAR(250) NULL,
+    nEdad INT NULL;
+GO
+
+-- 22. Crear restricción CHECK para edades entre 18 y 65 años.
+ALTER TABLE TEmpleado
+ADD CONSTRAINT CHK_nEdad_Rango CHECK (nEdad >= 18 AND nEdad <= 65);
+GO
+
+-- 23. Agregar restricción UNIQUE al correo electrónico.
+ALTER TABLE TEmpleado
+ADD CONSTRAINT UQ_cEmail UNIQUE (cEmail);
+GO
+
+-- 24. Agregar columna bActivo tipo BIT con valor por defecto 1.
+ALTER TABLE TEmpleado
+ADD bActivo BIT NOT NULL CONSTRAINT DF_bActivo DEFAULT 1;
+GO
+
+-- 25. Eliminar la columna cDireccion.
+ALTER TABLE TEmpleado
+DROP COLUMN cDireccion;
+GO
+
+-- 26. Cambiar el tipo de dato de teléfono a VARCHAR(20).
+ALTER TABLE TEmpleado
+ALTER COLUMN cTelefono VARCHAR(20) NULL;
+GO
+
+-- 27. Agregar columna cGenero.
+ALTER TABLE TEmpleado
+ADD cGenero CHAR(1) NULL;
+GO
+
+-- 28. Agregar restricción CHECK para que el género solo permita M o F.
+ALTER TABLE TEmpleado
+ADD CONSTRAINT CHK_cGenero_Valores CHECK (cGenero IN ('M', 'F'));
+GO
+
+-- 29. Agregar columna dFechaNacimiento.
+ALTER TABLE TEmpleado
+ADD dFechaNacimiento DATE NULL;
+GO
+
+
+-- =======================================================================
+-- Creación de la nueva tabla TSucursal (Punto 30)
+-- =======================================================================
+
+-- 30. Crear una nueva tabla llamada TSucursal.
+CREATE TABLE TSucursal (
+    nSucursalID INT IDENTITY(1,1),
+    cNombreSucursal VARCHAR(100) NOT NULL,
+    cCiudad VARCHAR(100) NOT NULL,
+    
+    CONSTRAINT PK_TSucursal PRIMARY KEY (nSucursalID),
+    CONSTRAINT UQ_cNombreSucursal UNIQUE (cNombreSucursal)
+);
+GO
