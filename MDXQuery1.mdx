@@ -183,3 +183,144 @@ CREATE TABLE TSucursal (
     CONSTRAINT UQ_cNombreSucursal UNIQUE (cNombreSucursal)
 );
 GO
+
+
+-- insertar 5 departamentos diferentes
+INSERT INTO TDepartamento (cNombreDepartamento) VALUES 
+('Recursos Humanos'), ('Desarrollo'), ('Marketing'), ('Ventas'), ('Finanzas');
+
+-- 32. Insertar 5 cargos
+INSERT INTO TCargo (cNombreCargo) VALUES 
+('Gerente'), ('Desarrollador'), ('Analista'), ('Diseñador'), ('Soporte');
+
+--33. Insertar 10 empleados
+INSERT INTO TEmpleado (cNIF, cNombre, cApellido, nDepartamentoID, nCargoID, nSalario, nEdad, cGenero) VALUES 
+('111A', 'Ana', 'García', 1, 1, 2500, 30, 'F'),
+('222B', 'Luis', 'Pérez', 2, 2, 2200, 28, 'M'),
+('333C', 'María', 'López', 3, 3, 1800, 35, 'F'),
+('444D', 'Juan', 'Díaz', 2, 2, 2200, 25, 'M'),
+('555E', 'Sofía', 'Ruiz', 3, 4, 1900, 29, 'F'),
+('666F', 'Carlos', 'Mora', 4, 5, 1500, 40, 'M'),
+('777G', 'Elena', 'Gil', 5, 1, 3000, 45, 'F'),
+('888H', 'Pedro', 'Sanz', 2, 3, 1700, 32, 'M'),
+('999I', 'Lucía', 'Vega', 2, 2, 2100, 27, 'F'),
+('000J', 'Diego', 'Ríos', 4, 5, 1600, 31, 'M');
+
+--34. Insertar 3 proyectos
+INSERT INTO TProyecto (cNombreProyecto, dFechaInicio) VALUES 
+('Migración Nube', '2026-01-01'), ('App Móvil', '2026-02-01'), ('Rediseño Web', '2026-03-01');
+
+--35. Asignar empleados a proyectos
+INSERT INTO TEmpleadoProyecto (nEmpleadoID, nProyectoID) VALUES 
+(1, 1), (2, 2), (3, 3), (4, 1), (5, 2);
+
+--36. Insertar empleado usando valor por defecto de fecha
+INSERT INTO TEmpleado (cNIF, cNombre, cApellido, nSalario) 
+VALUES ('123X', 'Laura', 'Mendieta', 2000);
+
+--37. Insertar empleado con correo electrónico
+INSERT INTO TEmpleado (cNIF, cNombre, cApellido, cEmail, nSalario) 
+VALUES ('456Y', 'Jorge', 'Sola', 'jorge@empresa.com', 2200);
+
+
+--38. Insertar empleado sin indicar estado activo
+INSERT INTO TEmpleado (cNIF, cNombre, cApellido, nSalario) 
+VALUES ('789Z', 'Clara', 'Sol', 2100);
+
+--39. Insertar registros usando múltiples VALUES
+INSERT INTO TCargo (cNombreCargo) VALUES 
+('Becario'), ('Consultor'), ('Auditor');
+
+--40. Intentar insertar un salario negativo y analizar el error
+INSERT INTO TEmpleado (cNIF, cNombre, cApellido, nSalario) 
+VALUES ('999X', 'Error', 'Prueba', -500);
+
+-- 41. Incrementar 10% el salario
+UPDATE TEmpleado SET nSalario = nSalario * 1.10;
+
+-- 42. Incrementar 20% salario en departamento específico (ej. Depto 1)
+UPDATE TEmpleado SET nSalario = nSalario * 1.20 WHERE nDepartamentoID = 1;
+
+-- 43. Actualizar correo de un empleado
+UPDATE TEmpleado SET cEmail = 'nuevo.email@empresa.com' WHERE nEmpleadoID = 1;
+
+-- 44. Modificar cargo de un empleado
+UPDATE TEmpleado SET nCargoID = 2 WHERE nEmpleadoID = 1;
+
+-- 45. Cambiar departamento de dos empleados
+UPDATE TEmpleado SET nDepartamentoID = 3 WHERE nEmpleadoID IN (2, 3);
+
+-- 46. Marcar inactivos (salario < 500)
+UPDATE TEmpleado SET bActivo = 0 WHERE nSalario < 500;
+
+-- 47. Actualizar fecha fin de proyecto
+UPDATE TProyecto SET dFechaFin = '2026-12-31' WHERE nProyectoID = 1;
+
+-- 48. Asignar nuevo proyecto a empleado
+INSERT INTO TEmpleadoProyecto (nEmpleadoID, nProyectoID) VALUES (1, 3);
+
+-- 49. Eliminar por NIF
+DELETE FROM TEmpleado WHERE cNIF = '111A';
+
+-- 50. Eliminar inactivos
+DELETE FROM TEmpleado WHERE bActivo = 0;
+
+-- 51. Eliminar proyecto
+DELETE FROM TProyecto WHERE nProyectoID = 3;
+
+-- 52. Eliminar asignaciones de un empleado
+DELETE FROM TEmpleadoProyecto WHERE nEmpleadoID = 1;
+
+-- 53. Eliminar departamento sin empleados
+DELETE FROM TDepartamento WHERE nDepartamentoID NOT IN (SELECT DISTINCT nDepartamentoID FROM TEmpleado WHERE nDepartamentoID IS NOT NULL);
+
+-- 54. Ordenados por apellido
+SELECT * FROM TEmpleado ORDER BY cApellido;
+
+-- 55. Salario > 1000 | 56. Activos
+SELECT * FROM TEmpleado WHERE nSalario > 1000;
+SELECT * FROM TEmpleado WHERE bActivo = 1;
+
+-- 57. Contratados año actual
+SELECT * FROM TEmpleado WHERE YEAR(dFechaContratacion) = 2026;
+
+-- 58. Empleados y departamento | 59. Empleados y cargo
+SELECT E.cNombre, D.cNombreDepartamento FROM TEmpleado E JOIN TDepartamento D ON E.nDepartamentoID = D.nDepartamentoID;
+SELECT E.cNombre, C.cNombreCargo FROM TEmpleado E JOIN TCargo C ON E.nCargoID = C.nCargoID;
+
+-- 60. Asignados a proyectos
+SELECT DISTINCT E.cNombre FROM TEmpleado E JOIN TEmpleadoProyecto EP ON E.nEmpleadoID = EP.nEmpleadoID;
+
+-- 61. Cantidad por depto | 62. Promedio salario | 63. Máx/Min
+SELECT nDepartamentoID, COUNT(*) AS Total FROM TEmpleado GROUP BY nDepartamentoID;
+SELECT nDepartamentoID, AVG(nSalario) AS Promedio FROM TEmpleado GROUP BY nDepartamentoID;
+SELECT nDepartamentoID, MAX(nSalario) AS Maximo, MIN(nSalario) AS Minimo FROM TEmpleado GROUP BY nDepartamentoID;
+
+-- 64. Proyectos con > 2 empleados
+SELECT nProyectoID, COUNT(nEmpleadoID) FROM TEmpleadoProyecto GROUP BY nProyectoID HAVING COUNT(nEmpleadoID) > 2;
+
+-- 65. Apellido inicia con G | 66. Salario desc | 67. Top 3 salarios
+SELECT * FROM TEmpleado WHERE cApellido LIKE 'G%';
+SELECT * FROM TEmpleado ORDER BY nSalario DESC;
+SELECT TOP 3 * FROM TEmpleado ORDER BY nSalario DESC;
+
+-- 68. Edad 25-40 | 69. Total activos | 70. Total proyectos
+SELECT * FROM TEmpleado WHERE nEdad BETWEEN 25 AND 40;
+SELECT COUNT(*) FROM TEmpleado WHERE bActivo = 1;
+SELECT COUNT(*) FROM TProyecto;
+
+-- 71. Eliminar CHECK edad | 72. Eliminar UNIQUE email
+ALTER TABLE TEmpleado DROP CONSTRAINT CHK_nEdad_Rango;
+ALTER TABLE TEmpleado DROP CONSTRAINT UQ_cEmail;
+
+-- 73. Re-agregar
+ALTER TABLE TEmpleado ADD CONSTRAINT CHK_nEdad_Rango CHECK (nEdad >= 18 AND nEdad <= 65);
+ALTER TABLE TEmpleado ADD CONSTRAINT UQ_cEmail UNIQUE (cEmail);
+
+-- 74-79. Eliminar tablas (Orden inverso por FK)
+DROP TABLE TEmpleadoProyecto; DROP TABLE TProyecto; DROP TABLE TEmpleado; 
+DROP TABLE TCargo; DROP TABLE TDepartamento; DROP TABLE TSucursal;
+
+-- 80. Eliminar DB
+USE master; DROP DATABASE EmpresaSQL;
+
